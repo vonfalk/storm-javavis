@@ -36,7 +36,7 @@ class JavaType extends Type {
 
     STypeParams params;
 
-    SClassBody body; //content för vad som finns i typen
+    SClassBody body;
 
     SExtends? extend;
 

@@ -13,10 +13,6 @@ SRoot tree(Str v) {
     p.tree;
 }
 
-void fileEval() {
-	fileTree(cwdUrl / "test.java").transform();
-}
-
 SRoot fileTree(Url file) {
 	Parser<SRoot> p;
 	p.parse(file.readAllText(), file);
@@ -24,5 +20,3 @@ SRoot fileTree(Url file) {
 		p.throwError;
 	p.tree;
 }
-
-

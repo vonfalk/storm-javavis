@@ -39,7 +39,6 @@ SQIdentList : SQIdent - (, ",", SQIdent)*;
 
 // Start of the grammar.
 Content SRoot();
-//SRoot : SDelimiter - SPkgName, SImportDecl, STypeDecl - SDelimiter;
 SRoot => Content() : SDelimiter - (SPkgName,)? SImportDecl, STypeDecl(me) - SDelimiter;
 
 void SPkgName();
@@ -52,17 +51,14 @@ SImportDecl : "import" #keyword ~ ("static" #keyword,)? SQIdent, SImportEnd, ";"
 void SImportEnd();
 SImportEnd : ("\.\*")?;
 
-//void STypeDecl();
 void STypeDecl(Content content);
-//STypeDecl : SModifiers, SClassDecl;
 STypeDecl => content : SModifiers, SClassDecl -> add;
 STypeDecl : SModifiers, SEnumDecl;
 STypeDecl : SModifiers, SInterfaceDecl;
 STypeDecl : SModifiers, SAnnotationDecl;
 
 JavaType SClassDecl();
-//SClassDecl => JavaType(name, params, implements, extends, body) : "class" #keyword ~ SIdent name #typeName, STypeParams params, (SExtends extends,)? SImplements implement, SClassBody body;
-SClassDecl => JavaType(name, params, implement, extends, body) : "class" #keyword ~ SIdent name #typeName, STypeParams @params, (SExtends @extends,)? SImplements @implement, SClassBody(me) @body;
+SClassDecl => JavaType(name, params, implement, extend, body) : "class" #keyword ~ SIdent name #typeName, STypeParams @params, (SExtends @extend,)? SImplements @implement, SClassBody(me) @body;
 
 void SEnumDecl();
 SEnumDecl : "enum" #keyword, SIdent #typeName, SImplements, SEnumBody;
@@ -89,17 +85,15 @@ SImplements :;
 // Types.
 Value SType();
 SType => type : SBasicType type - (, "\[\]")*;
-//SType : SRefType;
-
-//TODO: double
+SType : SRefType;
 
 Value SBasicType();
-SBasicType : "byte" #typeName; //Byte
-SBasicType : "short" #typeName; //Byte också?
+SBasicType : "byte" #typeName;
+SBasicType : "short" #typeName;
 SBasicType => charType() : "char" #typeName;
 SBasicType => intType() : "int" #typeName;
 SBasicType => longType() : "long" #typeName;
-SBasicType => floatType() : "float" #typeName; //Float
+SBasicType => floatType() : "float" #typeName;
 SBasicType => doubleType() : "double" #typeName;
 SBasicType => boolType() : "boolean" #typeName;
 SBasicType => strType() : "String" #typeName;
@@ -185,8 +179,6 @@ SElementArray : SElementValue - (, ",", SElementValue)*;
 // Expressions and blocks.
 Expr SExpr(Block block);
 SExpr => e : SExpr1(block) e;
-SExpr => DotOperator(pos, block, e, name) : SExpr1(block) e, "\.", SIdent name;
-//SExpr => assign(pos, block, op, var, e) : SIdent var, "=" op, SExpr1(block) e;
 SExpr => assign(pos, block, op, var, rhs) : SIdent var, SAssignOp op, SExpr1(block) rhs;
 
 SStr SAssignOp();
@@ -255,8 +247,8 @@ SPrefixOp : "\+\+";
 SPrefixOp : "--";
 SPrefixOp : "!";
 SPrefixOp : "~";
-//SPrefixOp : "\+";
-//SPrefixOp : "-";
+PrefixOp : "\+";
+SPrefixOp : "-";
 
 void SPostfixOp();
 SPostfixOp : "\+\+";
@@ -354,7 +346,6 @@ SGenericSuffix : "super" #keyword, SSelector;
 SGenericSuffix : SIdent #fnName, SArgs;
 
 Stmt SStmt(Block block);
-//TODO: inte returnera "block"
 SStmt => block : ";";
 SStmt => s : SBlock(block) s;
 SStmt : SIdent, ":", SStmt;
@@ -364,11 +355,9 @@ SStmt[10] => IfStmt(pos, block) : "if" #keyword, "(", SExpr(me) -> cond, ")" [, 
 SStmt[10] => WhileStmt(pos, block) : "while" #keyword, "(", SExpr(me) -> cond, ")" [, SStmt(me) -> body]?;
 SStmt[10] : "do[ \t]" #keyword [, SStmt, ]? "while" #keyword, "(", SExpr, ")", ";";
 SStmt[10] : "for" #keyword, "(", SForControl, ")" [, SStmt]?;
-//TODO: lägg till stöd för label-specifika break/continue statements
 SStmt[10] => Break(pos, block) : "break" #keyword - (, SIdent)?;
 SStmt[10] => Continue(pos, block) : "continue" #keyword - (, SIdent)?;
 SStmt[10] => Return(pos, block, e) : "return" #keyword, (SExpr(block) e)?;
-//SStmt[10] : "return[ \t]" #keyword, SExpr;
 SStmt[10] : "throw[ \t]" #keyword, SExpr;
 SStmt[10] : "synchronized", "(", SExpr, ")", SBlock;
 SStmt[10] : "try" #keyword, SBlock, STryTail;
@@ -412,16 +401,13 @@ SBlockStmt : STypeDecl;
 SBlockStmt => block : SVarDecl(block) -> add;
 
 VarDecl SVarDecl(Block block);
-//SVarDecl => VarDecl(pos, block, type, name) : SVarModifier, SType type, SIdent name #varName, ";";
 SVarDecl => VarDecl(pos, block, type, name, in) : SVarModifier, SType type, SIdent name #varName, ("=", SExpr(block) in,)? ";";
-//SVarDecl => VarDecl(pos, block, type, name) : SVarModifier, SType type, SIdent name #varName, SVarSuffix(block) -> assign, ";";
-//SVarDecl => VarDecl(pos, block, type, name) : SVarModifier, SType type, SIdent name #varName, SVarSuffix suffix, (",", SIdent #varName, SVarSuffix,)* ";";
 
 Block SBlock(Block parent);
 SBlock => parent : "{" [, (SBlockStmt(parent) -> add,)* ]+ "}";
 
 // Class body.
-void SClassBody(JavaType type); //JavaType type som parameter, ser till att lägga till alla funktioner sen
+void SClassBody(JavaType type);
 SClassBody : "{" [, (SClassEntry(type),)*]+ "}";
 
 void SClassEntry(JavaType type);
@@ -434,16 +420,14 @@ SMemberDecl : STypeDecl;
 SMemberDecl : SType, SIdent #varName, SVarSuffix, (",", SIdent #varName, SVarSuffix,)* ";";
 SMemberDecl => JavaFnDecl(pos, result, name, formals, qlist, end): SType result, SIdent name #fnName, SFormals formals, ("throws" #keyword, SQIdentList @qlist,)? SMethodEnd @end;
 SMemberDecl : SIdent #typeName, SFormals, ("throws" #keyword, SQIdentList,)? SBlock;
-// generics?:
-//SMemberDecl : STypeParams, SType, SIdent #fnName, SFormals, ("throws" #keyword, SQIdentList,)? SMethodEnd;
-//SMemberDecl : STypeParams, SIdent #typeName, SFormals, ("throws" #keyword, SQIdentList,)? SBlock;
+SMemberDecl : STypeParams, SType, SIdent #fnName, SFormals, ("throws" #keyword, SQIdentList,)? SMethodEnd;
+SMemberDecl : STypeParams, SIdent #typeName, SFormals, ("throws" #keyword, SQIdentList,)? SBlock;
 
 Block SMethodEnd(Block parent);
 SMethodEnd : ";";
 SMethodEnd => block : SBlock(parent) block;
 
 Array<Formal> SFormals();
-//SFormals : "(", (SFormalList)?, ")";
 SFormals => Array<Formal>() : "(", (SFormal -> push)* ")";
 
 Formal SFormal();

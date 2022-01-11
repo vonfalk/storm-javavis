@@ -34,7 +34,7 @@ class Breakable extends Block {
             at = curr.parent;
         }
         
-        throw SyntaxError(pos, "Cannot break- or continue from here.");
+        throw SyntaxError(pos, "Cannot break or continue from here.");
     }
 }
 
